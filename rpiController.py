@@ -284,7 +284,10 @@ def Send(data):
     """Function that can be called from other files that wants to send data"""
     SendObj = NRF24L01P()
     SendObj.sendData(data)
-    print("Enter data to send (3 bytes): ")  #Retype the input-text (input is still on form main-loop) 
+    print("Enter data to send (3 bytes): ")  #Retype the input-text (input is still on form main-loop)
+
+def TurnOn(nrf24):
+    nrf24.sendData("111")
 
                                 
 if __name__ == "__main__":
@@ -305,7 +308,10 @@ if __name__ == "__main__":
             #print(package)
             bytesToSend = [ord(str(x)) for x in package] #Convert input to decimal values 
             #print(bytesToSend)
-            SendObj.sendData(bytesToSend)  #calls the sendData() function with the payload
+            if package == "111"
+                SendObj.sendData(bytesToSend)  #calls the sendData() function with the payload
+            else
+                TurnOn(SendObj)
 
     else:   #nRF receiver
         print('\nReceiver')
