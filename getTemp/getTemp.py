@@ -11,7 +11,7 @@ def getTemp():
         temp = (forecast.get_currently().temperature * 9.0 / 5.0) + 32
         return temp
     else:
-        print(result['response'])
+        return -99.0
 
 def getWeather():
     forecast = Forecastio("b8d1abd0c7da6a6c878e64015e78a8ee")
@@ -20,25 +20,14 @@ def getWeather():
     
     if result['success'] is True:
         temp = (forecast.get_currently().temperature * 9.0 / 5.0) + 32
-        print(forecast.get_currently().summary)
-        print(temp)
+        return forecast.get_currently().summary
     else:
-        print("FAIL")
-        print(result['response'])
+        return "FAIL"
 
 
 def main():
-    forecast = Forecastio("b8d1abd0c7da6a6c878e64015e78a8ee")
-    result = forecast.load_forecast(39.960278, -74.978889,
-                                   time=datetime.datetime.now(), units="si")
-    
-    if result['success'] is True:
-        temp = (forecast.get_currently().temperature * 9.0 / 5.0) + 32
-        print(forecast.get_currently().summary)
-        print(temp)
-    else:
-        print("FAIL")
-        print(result['response'])
+    print(getWeather())
+    print(getTemp())
 
 if __name__ == "__main__":
     main()

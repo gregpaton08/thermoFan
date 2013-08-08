@@ -3,6 +3,7 @@ from quick2wire.spi import *
 from quick2wire.gpio import Pin
 from quick2wire.gpio import In,Out,pi_header_1
 import time
+#import getTemp
 #import TCP_Server 
 
 PAYLOAD_SIZE   = 3
@@ -287,12 +288,24 @@ def Send(data):
     print("Enter data to send (3 bytes): ")  #Retype the input-text (input is still on form main-loop)
 
 def TurnOn(nrf24):
-    nrf24.sendData("111")
+    nrf24.sendData([ord("1"), ord("1"), ord("1")])
+
+def TurnOff(nrf24):
+    nrf24.sendData([ord("2"), ord("2"), ord("2")])
+
+def IsOn(nrf24):
+    nrf24.sendData([ord("3"), ord("3"), ord("3")])
+    SET_CONFIG = 0x1F
+    nrf24.setupRadio()
+    nrf24.receiveData()
+    time.sleep(SMALL_PAUSE)
+    SET_CONFIG = 0x1E   
+    nrf24.setupRadio()
 
                                 
 if __name__ == "__main__":
     """Gets called upon when running the file"""
-    rxtx = input("rx or tx? \n")    #Receiver or transmitter
+    rxtx = "tx"#input("rx or tx? \n")    #Receiver or transmitter
     SendObj = NRF24L01P()   #Start class 
     
     if rxtx == "tx":    #nRF transmitter
@@ -308,10 +321,22 @@ if __name__ == "__main__":
             #print(package)
             bytesToSend = [ord(str(x)) for x in package] #Convert input to decimal values 
             #print(bytesToSend)
-            if package == "111"
-                SendObj.sendData(bytesToSend)  #calls the sendData() function with the payload
-            else
+            if "1" in package:
                 TurnOn(SendObj)
+            elif "2" in package:
+                TurnOff(SendObj)
+            elif "3" in package:
+                IsOn(SendObj)
+            elif "exit" in package:
+                sys.exit()
+            elif len(str(package)) >= 3:
+                SendObj.sendData(bytesToSend)
+
+            therm = open('/sys/bus/w1/devices/28-000004abf982/w1_slave','r')
+            #print(therm.read())
+            temp = therm.read()
+            temp = float(temp[temp.index('t=') + 2:]) / 1000
+            print(temp)
 
     else:   #nRF receiver
         print('\nReceiver')
