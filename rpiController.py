@@ -3,6 +3,7 @@ from quick2wire.spi import *
 from quick2wire.gpio import Pin
 from quick2wire.gpio import In,Out,pi_header_1
 import time
+import getTemp
 #import TCP_Server 
 
 PAYLOAD_SIZE   = 3
@@ -158,10 +159,10 @@ class NRF24L01P:
                                                 #register or the "READ_REG". (See datasheet Tabel 8)
         
         #Print out the STATUS registry before transmission
-        self.ReadPrintReg(STATUS,"STATUS before",1)
+        #self.ReadPrintReg(STATUS,"STATUS before",1)
 
         #Print out the transmitting bytes with quotations ("chr(34)"), Payload cannot be read from the nRF! 
-        print("Transmitting...[{}{}{},{}{}{},{}{}{}]".format(chr(34), chr(toSend[0]),chr(34),chr(34), chr(toSend[1]), chr(34), chr(34),chr(toSend[2]),chr(34)))
+        #print("Transmitting...[{}{}{},{}{}{},{}{}{}]".format(chr(34), chr(toSend[0]),chr(34),chr(34), chr(toSend[1]), chr(34), chr(34),chr(toSend[2]),chr(34)))
 
         #This checks if the payload is"900" or "901", 002, 003 or 004, and if so, changes the address on the nRF.
         a = "".join([chr(x) for x in toSend])
@@ -172,7 +173,7 @@ class NRF24L01P:
               self.changeAddress(0x14)
 
         #Print out the address one more time, to make sure it is sent to the right receiver. 
-        self.ReadPrintReg(RX_ADDR_P0,"To",5)
+        #self.ReadPrintReg(RX_ADDR_P0,"To",5)
         
         #write bytes to send into tx buffer
         bytes = [WR_TX_PLOAD]   #This one is simular to FLUSH_TX because it is located on the same top level in the nRF,
@@ -195,8 +196,8 @@ class NRF24L01P:
                 pass                   
             raise   #continue to break or shutdown!            
         
-        self.ReadPrintReg(STATUS,"STATUS after",1)  #Read STATUS register that hopefully tells you a successful transmission has occured (0x2E)
-        print("")
+        #self.ReadPrintReg(STATUS,"STATUS after",1)  #Read STATUS register that hopefully tells you a successful transmission has occured (0x2E)
+        #print("")
         
         if(a=="900" or a=="901" or a=="002" or a=="003" or a=="004"):      #If you changed address above, change it back to normal
             self.changeAddress(0x12)    #Change back address!
@@ -287,12 +288,24 @@ def Send(data):
     print("Enter data to send (3 bytes): ")  #Retype the input-text (input is still on form main-loop)
 
 def TurnOn(nrf24):
-    nrf24.sendData("111")
+    nrf24.sendData([ord("1"), ord("1"), ord("1")])
+
+def TurnOff(nrf24):
+    nrf24.sendData([ord("2"), ord("2"), ord("2")])
+
+def IsOn(nrf24):
+    nrf24.sendData([ord("3"), ord("3"), ord("3")])
+    SET_CONFIG = 0x1F
+    nrf24.setupRadio()
+    nrf24.receiveData()
+    time.sleep(SMALL_PAUSE)
+    SET_CONFIG = 0x1E   
+    nrf24.setupRadio()
 
                                 
 if __name__ == "__main__":
     """Gets called upon when running the file"""
-    rxtx = input("rx or tx? \n")    #Receiver or transmitter
+    rxtx = "tx"#input("rx or tx? \n")    #Receiver or transmitter
     SendObj = NRF24L01P()   #Start class 
     
     if rxtx == "tx":    #nRF transmitter
@@ -308,10 +321,24 @@ if __name__ == "__main__":
             #print(package)
             bytesToSend = [ord(str(x)) for x in package] #Convert input to decimal values 
             #print(bytesToSend)
-            if package == "111"
-                SendObj.sendData(bytesToSend)  #calls the sendData() function with the payload
-            else
+            if "1" in package:
                 TurnOn(SendObj)
+            elif "2" in package:
+                TurnOff(SendObj)
+            elif "3" in package:
+                IsOn(SendObj)
+            elif "exit" in package:
+                sys.exit()
+            elif len(str(package)) >= 3:
+                SendObj.sendData(bytesToSend)
+
+            therm = open('/sys/bus/w1/devices/28-000004abf982/w1_slave','r')
+            #print(therm.read())
+            temp = therm.read()
+            temp = float(temp[temp.index('t=') + 2:]) / 1000
+            temp = (temp * 9.0 / 5.0) + 32
+            print(temp)
+            print(getTemp.getTemp())
 
     else:   #nRF receiver
         print('\nReceiver')
